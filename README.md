@@ -1,4 +1,4 @@
-Litematica Printer
+PWP　Litematica Printer
 ==================
 This fork adds printing functionality for Litematica fabric 1.18 and 1.17 versions. Printer allows players to build
 big structures more quickly by automatically placing the correct blocks around you.
