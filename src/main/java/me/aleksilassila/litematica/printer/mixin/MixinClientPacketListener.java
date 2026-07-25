@@ -1,6 +1,8 @@
 package me.aleksilassila.litematica.printer.mixin;
 
 import me.aleksilassila.litematica.printer.printer.zxy.inventory.SwitchItem;
+import me.aleksilassila.litematica.printer.pwp.SchematicContainerSync;
+import me.aleksilassila.litematica.printer.pwp.SchematicContainerSync.SchematicSyncState;
 import me.aleksilassila.litematica.printer.printer.zxy.Utils.ZxyUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -32,5 +34,9 @@ public abstract class MixinClientPacketListener {
         }
 //        if(QuickShulkerUtils.waitForTheItemToBeSwitched != null) QuickShulkerUtils.switchItem(QuickShulkerUtils.targetSlot);
         if(num == 1 || num == 3)ZxyUtils.syncInv();
+        
+        if(SchematicContainerSync.schematicSyncState == SchematicSyncState.FIND_AND_CHECK_CONTAINER) {
+            SchematicContainerSync.schematicSyncState = SchematicSyncState.FILLING_CONTAINER;
+        }
      }
 }

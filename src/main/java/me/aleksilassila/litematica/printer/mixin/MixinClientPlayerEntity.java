@@ -4,6 +4,7 @@ import me.aleksilassila.litematica.printer.printer.PlacementGuide;
 import me.aleksilassila.litematica.printer.printer.Printer;
 import me.aleksilassila.litematica.printer.printer.zxy.Utils.BlockTask;
 import me.aleksilassila.litematica.printer.printer.zxy.inventory.OpenInventoryPacket;
+import me.aleksilassila.litematica.printer.pwp.SchematicContainerSync;
 import me.aleksilassila.litematica.printer.printer.zxy.Utils.Statistics;
 import me.aleksilassila.litematica.printer.printer.zxy.Utils.ZxyUtils;
 import net.minecraft.client.Minecraft;
@@ -41,6 +42,7 @@ public class MixinClientPlayerEntity {
 	public void tick(CallbackInfo ci) {
 		Printer printer = Printer.getPrinter();
 		ZxyUtils.tick();
+		SchematicContainerSync.tick();
 		printer.myTick();
 		if(!(isEnablePrinter())){
 			PlacementGuide.posMap = new HashMap<>();

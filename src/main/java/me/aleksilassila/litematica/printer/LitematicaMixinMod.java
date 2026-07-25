@@ -82,6 +82,8 @@ public class LitematicaMixinMod implements ModInitializer, ClientModInitializer 
 			ImmutableList.of("minecraft:snow","minecraft:lava","minecraft:water","minecraft:bubble_column","minecraft:short_grass"), "打印时将忽略这些错误方块 直接替换。");
 	public static final ConfigHotkey TEST = new ConfigHotkey("test", "","测试用的，别乱设置");
 	public static final SuperConfig<ConfigHotkey> TEST1 = new SuperConfig<>(TEST,INVENTORY,INVENTORY_LIST);
+	public static final ConfigInteger SCHEMATIC_CONTAINER_SYNC_TIMEOUT = new ConfigInteger("藍圖同步超時時間", 20, 1, 200, "嘗試開啟容器後的等待超時時間");
+	public static final ConfigInteger SCHEMATIC_CONTAINER_SYNC_RATE = new ConfigInteger("藍圖同步速率", 2, 1, 200, "執行藍圖容器填充速率");
 
 	public static ImmutableList<IConfigBase> getConfigList() {
 		List<IConfigBase> list = new java.util.ArrayList<>(Configs.Generic.OPTIONS);
@@ -96,6 +98,8 @@ public class LitematicaMixinMod implements ModInitializer, ClientModInitializer 
 		list.add(PRINT_IN_AIR);
 		list.add(PRINT_WATER_LOGGED_BLOCK);
 		list.add(BREAK_ERROR_BLOCK);
+		list.add(SCHEMATIC_CONTAINER_SYNC_TIMEOUT);
+		list.add(SCHEMATIC_CONTAINER_SYNC_RATE);
 
 		return ImmutableList.copyOf(list);
 	}
@@ -110,6 +114,8 @@ public class LitematicaMixinMod implements ModInitializer, ClientModInitializer 
 			"打印机工作时将会使用该库存内的物品\n" +
 			"建议库存区域内放置假人来常加载区块");
 	public static final ConfigHotkey REMOVE_PRINT_INVENTORY = new ConfigHotkey("清空打印机库存", "", "清空打印机库存");
+	public static final ConfigHotkey SINGLE_SCHEMATIC_CONTAINER_SYNC = new ConfigHotkey("單獨容器同步", "", "按下熱鍵後，同步藍圖內的容器的物品。");
+	public static final ConfigHotkey MULTIPLE_SCHEMATIC_CONTAINER_SYNC = new ConfigHotkey("多重容器同步", "", "按下熱鍵後，同步藍圖內的容器的物品。\n將在選區裡且藍圖中有的容器同步");
 
 
 	public static List<IConfigBase> getHotkeyList() {
@@ -123,11 +129,19 @@ public class LitematicaMixinMod implements ModInitializer, ClientModInitializer 
 		}
 		return ImmutableList.copyOf(list);
 	}
+
+	// Colors
 	public static final ConfigColor SYNC_INVENTORY_COLOR = new ConfigColor("容器同步与打印机添加库存高亮颜色","#4CFF4CE6", "");
+	public static final ConfigColor SCHEMATIC_CONTAINER_SYNC_TARGET_COLOR = new ConfigColor("藍圖容器同步目標顏色","#4CFF4CE6", "");
+	public static final ConfigColor SCHEMATIC_CONTAINER_SYNC_MISSING_COLOR = new ConfigColor("藍圖容器同步缺少顏色","#804CEAFF", "");
+	public static final ConfigColor SCHEMATIC_CONTAINER_SYNC_ERROR_COLOR = new ConfigColor("藍圖容器同步錯誤顏色","#80FF4C4C", "");
 
 	public static ImmutableList<IConfigBase> getColorsList() {
 		List<IConfigBase> list = new java.util.ArrayList<>(Configs.Colors.OPTIONS);
 		list.add(SYNC_INVENTORY_COLOR);
+		list.add(SCHEMATIC_CONTAINER_SYNC_TARGET_COLOR);
+		list.add(SCHEMATIC_CONTAINER_SYNC_MISSING_COLOR);
+		list.add(SCHEMATIC_CONTAINER_SYNC_ERROR_COLOR);
 		return ImmutableList.copyOf(list);
 	}
 

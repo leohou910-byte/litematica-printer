@@ -43,6 +43,8 @@ public class Configs implements IConfigHandler {
         list.add(FLUID_BLOCK_LIST);
         if(loadChestTracker) list.add(INVENTORY_LIST);
         list.add(BEDROCK_LIST);
+        list.add(SCHEMATIC_CONTAINER_SYNC_TIMEOUT);
+        list.add(SCHEMATIC_CONTAINER_SYNC_RATE);
 
         return ImmutableList.copyOf(list);
     }
@@ -105,6 +107,8 @@ public class Configs implements IConfigHandler {
         }
         if(FabricLoader.getInstance().isDevelopmentEnvironment()) list.add(TEST);
         if(FabricLoader.getInstance().isDevelopmentEnvironment()) list.add(TEST1);
+        list.add(SINGLE_SCHEMATIC_CONTAINER_SYNC);
+        list.add(MULTIPLE_SCHEMATIC_CONTAINER_SYNC);
 
         return ImmutableList.copyOf(list);
     }
@@ -112,6 +116,9 @@ public class Configs implements IConfigHandler {
     public static ImmutableList<IConfigBase> addColor(){
         List<IConfigBase> list = new ArrayList<>();
         list.add(SYNC_INVENTORY_COLOR);
+        list.add(SCHEMATIC_CONTAINER_SYNC_TARGET_COLOR);
+		list.add(SCHEMATIC_CONTAINER_SYNC_MISSING_COLOR);
+		list.add(SCHEMATIC_CONTAINER_SYNC_ERROR_COLOR);
 
         return ImmutableList.copyOf(list);
     }
@@ -134,6 +141,8 @@ public class Configs implements IConfigHandler {
             //#endif
         }
         if(FabricLoader.getInstance().isDevelopmentEnvironment()) list.add(TEST);
+        list.add(SINGLE_SCHEMATIC_CONTAINER_SYNC);
+        list.add(MULTIPLE_SCHEMATIC_CONTAINER_SYNC);
         return ImmutableList.copyOf(list);
     }
     //切换型开关

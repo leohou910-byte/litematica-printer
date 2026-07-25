@@ -12,7 +12,7 @@ import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import me.aleksilassila.litematica.printer.printer.State;
 import me.aleksilassila.litematica.printer.printer.bedrockUtils.Messager;
 import me.aleksilassila.litematica.printer.printer.zxy.inventory.OpenInventoryPacket;
-
+import me.aleksilassila.litematica.printer.pwp.SchematicContainerSync;
 //#if MC >= 12001
 import fi.dy.masa.malilib.util.GuiUtils;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -51,6 +51,12 @@ public class HotkeysCallback implements IHotkeyCallback {
             return true;
         }else if(key == SYNC_INVENTORY.getKeybind()){
             startOrOffSyncInventory();
+            return true;
+        } else if (key == SINGLE_SCHEMATIC_CONTAINER_SYNC.getKeybind()){
+            SchematicContainerSync.startSingleSchematicContainerSync();
+            return true;
+        } else if (key == MULTIPLE_SCHEMATIC_CONTAINER_SYNC.getKeybind()){
+            SchematicContainerSync.startMultipleSchematicContainerSync();
             return true;
         }else if(MODE_SWITCH.getOptionListValue().equals(State.ModeType.SINGLE) && key == SWITCH_PRINTER_MODE.getKeybind()){
             IConfigOptionListEntry cycle = PRINTER_MODE.getOptionListValue().cycle(true);
