@@ -157,6 +157,9 @@ public class SchematicContainerSync {
             // 獲取該格在容器內部的原始索引
             int containerSlotIndex = slot.getContainerSlot();
 
+            // test
+            // VersionIntegration.displaySystemMessage(client,"§c[MOD]containerSlotIndex : " + containerSlotIndex + ", schematicContainerSize : " + schematicContainerItemsNonNullList.size());
+
             // 確保藍圖數據的範圍不會超出箱子
             if (containerSlotIndex >= schematicContainerItemsNonNullList.size()) continue;
 
@@ -283,17 +286,17 @@ public class SchematicContainerSync {
     public static void startSingleSchematicContainerSync() {
         HitResult hitResult = client.hitResult;
         if (hitResult == null || hitResult.getType() != HitResult.Type.BLOCK) {
-            VersionIntegration.overlayMessage("未偵測到容器", false);
+            VersionIntegration.overlayMessage(client, "未偵測到容器", false);
             return;
         }
 
         blockPos = ((BlockHitResult) hitResult).getBlockPos();
         if (!InventoryUtils.isInventory(client.level, blockPos)) {
-            VersionIntegration.overlayMessage("這不是容器", false);
+            VersionIntegration.overlayMessage(client, "這不是容器", false);
             return;
         }
 
-        VersionIntegration.overlayMessage("單獨容器同步", false);
+        VersionIntegration.overlayMessage(client, "單獨容器同步", false);
         getReadyColor();
         schematicSyncList.clear();
         schematicSyncList.add(blockPos);
@@ -305,14 +308,14 @@ public class SchematicContainerSync {
     public static void startMultipleSchematicContainerSync() {
         if (schematicSyncList.isEmpty()) {
             getReadyColor();
-            VersionIntegration.overlayMessage("多重藍圖容器同步", false);
+            VersionIntegration.overlayMessage(client, "多重藍圖容器同步", false);
 
             schematicSyncList.clear();
             schematicSyncList.addAll(getSelectionAreaContainerList());
             highlightTargetPosList.addAll(schematicSyncList);
             schematicSyncState = SchematicSyncState.FIND_AND_CHECK_CONTAINER;
         } else {
-            VersionIntegration.overlayMessage("藍圖容器同步取消", false);
+            VersionIntegration.overlayMessage(client, "藍圖容器同步取消", false);
             stopSync();
         }
     }
@@ -322,14 +325,14 @@ public class SchematicContainerSync {
         switch (schematicSyncState) {
             case FIND_AND_CHECK_CONTAINER -> {
                 if (openRetryTimer > 0) {
-                    VersionIntegration.overlayMessage("嘗試開啟容器...", false);
+                    VersionIntegration.overlayMessage(client, "嘗試開啟容器...", false);
                     return;
                 }
 
                 // 已完成全部清單
                 if (schematicSyncList.isEmpty() && tempBlockPos == null) {
                     schematicSyncState = SchematicSyncState.IDLE;
-                    VersionIntegration.overlayMessage("藍圖容器同步完成", false);
+                    VersionIntegration.overlayMessage(client, "藍圖容器同步完成", false);
                     return;
                 }
 
@@ -352,14 +355,14 @@ public class SchematicContainerSync {
 
                 // 容器是否在範圍內
                 if (blockPos == null) {
-                    VersionIntegration.overlayMessage("距離過遠", false);
+                    VersionIntegration.overlayMessage(client, "距離過遠", false);
                     return;
                 }
 
                 // 檢查容器狀態是否能開啟
                 ContainerResult result = canContainerOpen(blockPos);
                 if (!result.canOpen) {
-                    VersionIntegration.overlayMessage(result.message(), false);
+                    VersionIntegration.overlayMessage(client, result.message(), false);
 
                     schematicSyncList.remove(blockPos);
                     highlightTargetPosList.remove(blockPos);
@@ -439,7 +442,7 @@ public class SchematicContainerSync {
                 } else {
                     display = String.join(", ", names);
                 }
-                VersionIntegration.overlayMessage("缺少物品: " + display, false);
+                VersionIntegration.overlayMessage(client, "缺少物品: " + display, false);
             }
 
             default -> {}
