@@ -25,10 +25,13 @@ import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.phys.*;
 
 //#if MC < 11900
@@ -122,74 +125,100 @@ public class SchematicContainerSync {
         return new ContainerResult(true, "");
     }
 
-    // 獲取藍圖容器物品
-    public static NonNullList<ItemStack> getContainerItemsFromSchematic(BlockPos worldPos) {
+    // 獲取藍圖容器物品，方便處理
+    private static NonNullList<Optional<ItemStack>> getContainerItemStacksFromSchematic(BlockPos worldPos) {
         WorldSchematic schematicWorld = SchematicWorldHandler.getSchematicWorld();
-        if (schematicWorld == null) return NonNullList.create();
+        if (schematicWorld == null) return null;
 
         BlockEntity blockEntity = schematicWorld.getBlockEntity(worldPos);
         if (blockEntity instanceof Container container) {
-            int size = container.getContainerSize();
-            NonNullList<ItemStack> schematicContainerList = NonNullList.withSize(size, ItemStack.EMPTY);
-            for (int i = 0; i < size; i++) {
-                schematicContainerList.set(i, container.getItem(i).copy());
+            int fullSize = container.getContainerSize();
+            int firstSlotIndex = 0;
+            
+            // 判斷是否為箱子，做特殊處理
+            if (blockEntity instanceof ChestBlockEntity chestBlockEntity) {
+                ChestType chestType = chestBlockEntity.getBlockState().getValue(ChestBlock.TYPE);
+                if (chestType != ChestType.SINGLE) {
+                    fullSize = 54;
+                }
+                if (chestType == ChestType.LEFT) {
+                    firstSlotIndex = 27;
+                }
             }
+            
+            // 加入list
+            NonNullList<Optional<ItemStack>> schematicContainerList = NonNullList.withSize(fullSize, Optional.empty());
+            for (int i = 0; i < container.getContainerSize(); i++) {
+                schematicContainerList.set(firstSlotIndex + i, Optional.of(container.getItem(i).copy()));
+            }
+            
             return schematicContainerList;
         }
+
         return NonNullList.create();
     }
 
     // 填充並回傳缺少物品
-    public static Map<Item, Integer> fillContainerAndReturnMissing(NonNullList<ItemStack> schematicContainerItemsNonNullList) {
+    public static Map<Item, Integer> fillContainerAndReturnMissing(BlockPos pos) {
         Map<Item, Integer> misItems = new HashMap<>();
-
         if (client.player == null || client.gameMode == null) return misItems;
-
+        
         AbstractContainerMenu sc = client.player.containerMenu;
 
-        Container targetContainer = sc.slots.get(0).container;
-        int containerSize = targetContainer.getContainerSize();
+        NonNullList<Slot> playerSlots = sc.slots;
+        NonNullList<Optional<ItemStack>> schematicContainerItemStacks = getContainerItemStacksFromSchematic(pos);
+        if (schematicContainerItemStacks.isEmpty()) return misItems;
 
-        for (Slot slot : sc.slots) {
-            // 過濾掉不屬於這個箱子的格位
-            if (slot.container != targetContainer) continue;
+        int playerContainerSize = playerSlots.get(0).container.getContainerSize();
 
-            // 獲取該格在容器內部的原始索引
-            int containerSlotIndex = slot.getContainerSlot();
+        int playerFirstSlotIndex = 0;
+        // if (playerSlots.get(0).container instanceof ChestBlockEntity chestBlockEntity
+        //         && chestBlockEntity.getBlockState().getValue(ChestBlock.TYPE) == ChestType.RIGHT) {
+        //     VersionIntegration.displaySystemMessage(client, "right");
+        //     playerFirstSlotIndex = 27;
+        // } else {
+        //     VersionIntegration.displaySystemMessage(client, "left");
+        // }
+        // 改用 pos 判斷
+        BlockState blockState = client.level.getBlockState(pos);
+        if (blockState.hasProperty(ChestBlock.TYPE) && blockState.getValue(ChestBlock.TYPE) == ChestType.LEFT) playerFirstSlotIndex = 27;
 
-            // test
-            // VersionIntegration.displaySystemMessage(client,"§c[MOD]containerSlotIndex : " + containerSlotIndex + ", schematicContainerSize : " + schematicContainerItemsNonNullList.size());
+        for (int i = 0; i < playerContainerSize; i++) {
+            if (i < playerFirstSlotIndex) continue;
 
-            // 確保藍圖數據的範圍不會超出箱子
-            if (containerSlotIndex >= schematicContainerItemsNonNullList.size()) continue;
+            Optional<ItemStack> schematicOptionalItemStack = schematicContainerItemStacks.get(i);
+            if (schematicOptionalItemStack.isEmpty()) continue; // 不填充跳過
 
-            ItemStack itemInSlot = slot.getItem(); // 容器裡的物品
-            ItemStack schematicStack = schematicContainerItemsNonNullList.get(containerSlotIndex); // 藍圖要求的物品
-            int currNum = itemInSlot.getCount();
-            int tarNum = schematicStack.getCount();
-            boolean same = ItemStack.isSameItemSameComponents(itemInSlot, schematicStack);
-            if (same && currNum == tarNum) continue; // 數量物品相同時 不和背包交互
+            ItemStack playerItemStack = playerSlots.get(i).getItem();           // 容器裡的物品
+            ItemStack schematicItemStack = schematicOptionalItemStack.get();    // 藍圖要求的物品
 
-            if (same) {
+            int currNum = playerItemStack.getCount();
+            int tarNum = schematicItemStack.getCount();
+
+            boolean same = ItemStack.isSameItemSameComponents(playerItemStack, schematicItemStack);
+            if (!same) {
+                // 不同直接扔出
+                client.gameMode.handleContainerInput(sc.containerId, i, 1, ContainerInput.THROW, client.player);
+                currNum = 0;
+            } else if (currNum != tarNum) {
                 // 相同但有多
                 while (currNum > tarNum) {
-                    client.gameMode.handleContainerInput(sc.containerId, slot.index, 0, ContainerInput.THROW, client.player);
+                    client.gameMode.handleContainerInput(sc.containerId, i, 0, ContainerInput.THROW, client.player);
                     currNum--;
                 }
             } else {
-                // 不同直接扔出
-                client.gameMode.handleContainerInput(sc.containerId, slot.index, 1, ContainerInput.THROW, client.player);
-                currNum = 0;
+                // 物品和數量相同時 不和背包交互
+                continue;
             }
 
             //背包交互
-            for (int j = containerSize; j < sc.slots.size(); j++) {
+            for (int j = playerContainerSize; j < sc.slots.size(); j++) {
                 // 補充完畢跳出
                 if (currNum == tarNum) break;
 
                 // 不符合條件跳過
                 ItemStack playerItem = sc.slots.get(j).getItem();
-                boolean same2 = ItemStack.isSameItemSameComponents(schematicStack, playerItem);
+                boolean same2 = ItemStack.isSameItemSameComponents(schematicItemStack, playerItem);
                 if (playerItem.isEmpty() || !same2) continue;
 
                 // 取德物品數量
@@ -198,17 +227,14 @@ public class SchematicContainerSync {
                 // 拿取背包物品，不管如何都要先拿起
                 client.gameMode.handleContainerInput(sc.containerId, j, 0, ContainerInput.PICKUP, client.player);
 
-                if ((tarNum - currNum) >= playerItemCount) { // 可直接全部移入
-
-                    // 把手上的全部放到箱子
-                    client.gameMode.handleContainerInput(sc.containerId, slot.index, 0, ContainerInput.PICKUP, client.player);
+                if ((tarNum - currNum) >= playerItemCount) {
+                    // 可直接全部移入
+                    client.gameMode.handleContainerInput(sc.containerId, i, 0, ContainerInput.PICKUP, client.player);
                     currNum += playerItemCount;
-
-                } else { // 需要一個一個移入
-
-                    // 一個一個移入
+                } else {
+                    // 需要一個一個移入
                     for (; currNum < tarNum && playerItemCount > 0; playerItemCount--) {
-                        client.gameMode.handleContainerInput(sc.containerId, slot.index, 1, ContainerInput.PICKUP, client.player);
+                        client.gameMode.handleContainerInput(sc.containerId, i, 1, ContainerInput.PICKUP, client.player);
                         currNum++;
                     }
                 }
@@ -220,7 +246,7 @@ public class SchematicContainerSync {
             }
 
             if (tarNum > currNum) {
-                Item type = schematicContainerItemsNonNullList.get(slot.index).getItem();
+                Item type = schematicItemStack.getItem();
                 misItems.put(type, misItems.getOrDefault(type, 0) + (tarNum - currNum));
             }
         }
@@ -389,8 +415,7 @@ public class SchematicContainerSync {
                 openRetryTimer = 0;
 
                 // 執行填充邏輯
-                NonNullList<ItemStack> schematicContainerItemsNonNullList = getContainerItemsFromSchematic(blockPos);
-                missingItems = fillContainerAndReturnMissing(schematicContainerItemsNonNullList);
+                missingItems = fillContainerAndReturnMissing(blockPos);
 
                 // 關閉箱子
                 client.player.closeContainer();
