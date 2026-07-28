@@ -437,7 +437,7 @@ public class PlacementGuide extends PrinterUtils {
                     if (requiredState.getValue(DoorBlock.OPEN) != currentState.getValue(DoorBlock.OPEN)){
                         if(requiredState.getBlock() instanceof DoorBlock doorBlock){
                             //#if MC >= 12001
-                            if (doorBlock.type().canOpenByHand()) break;
+                            if (!doorBlock.type().canOpenByHand()) break;
                             //#else
                             //$$ if (requiredState.getMaterial() == Material.METAL) {
                             //$$     break;
@@ -484,15 +484,12 @@ public class PlacementGuide extends PrinterUtils {
                     if (requiredState.getValue(TrapDoorBlock.OPEN) != currentState.getValue(TrapDoorBlock.OPEN)){
                         if(requiredState.getBlock() instanceof TrapDoorBlock trapDoorBlock){
                             //#if MC >= 12001
-                            if (trapDoorBlock.type.canOpenByHand()) break;
+                            if (!trapDoorBlock.type.canOpenByHand()) break;
                             //#else
-                            //$$ if (requiredState.getMaterial() == Material.METAL) {
-                            //$$     break;
-                            //$$ }
+                            //$$ if (requiredState.getMaterial() == Material.METAL) break;
                             //#endif
                         }
                         return new ClickAction();
-
                     }
 
                     break;
