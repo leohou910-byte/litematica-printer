@@ -378,7 +378,7 @@ public class SchematicContainerSync {
                 }
 
                 // 開啟容器
-                ActionControler.lookBlock(client, blockPos);
+                ActionControler.lookBlock(client.player, blockPos);
                 ActionControler.rightClickBlock(client, blockPos);
                 openRetryTimer = SCHEMATIC_CONTAINER_SYNC_TIMEOUT.getIntegerValue();
             }
