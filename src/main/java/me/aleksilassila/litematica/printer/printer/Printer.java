@@ -494,7 +494,7 @@ public class Printer extends PrinterUtils {
     }
 
     //TODO 多放方块 错误方块概率较高。。。
-    public void tick() {
+    public void old_tick() {
         if (!verify()) return;
         WorldSchematic worldSchematic = SchematicWorldHandler.getSchematicWorld();
         LocalPlayer pEntity = client.player;
@@ -633,6 +633,146 @@ public class Printer extends PrinterUtils {
             facingTimeOut = 0;
             currentAction = action;
             return;
+        }
+    }
+
+    public void tick() {
+        // verify
+        if (!verify()) return;
+
+        // initialize
+        LocalPlayer pEntity = client.player;
+        tickRate = PRINT_INTERVAL.getIntegerValue();
+
+        range1 = PRINTER_RANGE.getIntegerValue();
+        endTime = System.currentTimeMillis() + PRINT_TIMEOUT.getIntegerValue();
+        yDegression = false;
+
+        // finish unfinished action
+        if (currentAction != null) {
+            switchToItems(pEntity, currentAction.clickItems);
+            currentAction.sendQueue(client.player);
+        }
+
+        // tick rate
+        tick = ++tick % Integer.MAX_VALUE;
+        if (tickRate != 0 && tick % tickRate != 0) return;
+        
+        // check for executability
+        if (isOpenHandler) return;
+        if (switchItem()) return;
+
+        // check print mode
+        if (MODE_SWITCH.getOptionListValue().equals(State.ModeType.MULTI)) {
+            boolean multiBreakBooleanValue = MULTI_BREAK.getBooleanValue();
+            if (BEDROCK_SWITCH.getBooleanValue()) {
+                yDegression = true;
+                bedrockMode();
+                if(multiBreakBooleanValue) return;
+            }
+            if (LitematicaMixinMod.EXCAVATE.getBooleanValue()) {
+                yDegression = true;
+                miningMode();
+                if(multiBreakBooleanValue) return;
+            }
+            if (LitematicaMixinMod.REPLACE_BLOCK.getBooleanValue()) {
+                replaceMode();
+                if(multiBreakBooleanValue) return;
+            }
+        } else if (PRINTER_MODE.getOptionListValue() instanceof State.PrintModeType modeType && modeType != PRINTER) {
+            switch (modeType){
+                case BEDROCK -> {
+                    yDegression = true;
+                    bedrockMode();
+                }
+                case EXCAVATE -> {
+                    yDegression = true;
+                    miningMode();
+                }
+                case REPLACE_BLOCK -> replaceMode();
+            }
+            return;
+        }
+
+        // forEachBlockInRadius:
+        WorldSchematic worldSchematic = SchematicWorldHandler.getSchematicWorld();
+        ClientLevel world = client.level;
+        boolean forcedPlacementBooleanValue = FORCED_PLACEMENT.getBooleanValue();
+
+        BlockPos pos;
+        while ((pos = getBlockPos2()) != null) {
+            // check
+            if (!canInteracted(pos) &&
+                !DataManager.getRenderLayerRange().isPositionWithinRange(pos)
+            ) continue;
+
+            // 跳過放置
+            if (worldSchematic == null) continue;
+            BlockState requiredState = worldSchematic.getBlockState(pos);
+            if (PUT_SKIP.getBooleanValue() &&
+                PUT_SKIP_LIST.getStrings().stream().anyMatch(block -> equalsBlockName(block, requiredState.getBlock()))
+            ) continue;
+
+            // 放置冷卻
+            if (skipPosMap.containsKey(pos)) {
+                continue;
+            } else {
+                skipPosMap.put(pos, 0);
+            }
+
+            // 輕鬆放置
+            if(USE_EASY_MODE.getBooleanValue()) {
+                easyPos = pos;
+                WorldUtilsAccessor.doEasyPlaceAction(client);
+                easyPos = null;
+                if(tickRate != 0) return;
+                else continue;
+            }
+
+            // 放置動作
+            PlacementGuide.Action action = guide.getAction(world, worldSchematic, pos);
+            if (action == null || 
+                action.side == null || 
+                !playerHasAccessToItems(pEntity, action.clickItems)
+            ) continue;
+
+            if (Implementation.isInteractive(world.getBlockState(pos.relative(action.side)).getBlock())) {
+                action.shift = true;
+            }
+
+            //确认侦测器看向方块是否正确
+            Direction lookDir = action.getLookDirection();
+            if (requiredState.is(Blocks.OBSERVER) && PUT_TESTING.getBooleanValue()) {
+                BlockPos offset = pos.relative(lookDir);
+                if (isSchematicBlock(offset)) {
+                    BlockState state1 = world.getBlockState(offset);
+                    BlockState state2 = worldSchematic.getBlockState(offset);
+                    State state = State.get(state1, state2);
+                    if (state != State.CORRECT) continue;
+                }
+            }
+
+            if (forcedPlacementBooleanValue) action.shift = true;
+            
+            //发送放置准备
+            action.queueAction(pos);
+            action.sendPlacementPreparation(pEntity);
+
+            Vec3 hitModifier = usePrecisionPlacement(pos, requiredState);
+            if (hitModifier != null) {
+                action.hitModifier = hitModifier;
+                action.usePrecisionPlacement = true;
+            }
+
+            //处理不能快速放置的方块
+            if (hitModifier == null && isFacingBlock(requiredState)) {
+                facingTimeOut = 0;
+                currentAction = action;
+            } else {
+                action.sendQueue(pEntity);
+            }
+
+            if (tickRate != 0) return;
         }
     }
     public boolean isFacingBlock(BlockState state){

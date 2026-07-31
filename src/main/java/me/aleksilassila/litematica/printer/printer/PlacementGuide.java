@@ -9,6 +9,7 @@ import me.aleksilassila.litematica.printer.interfaces.Implementation;
 import me.aleksilassila.litematica.printer.mixin.FlowerPotBlockAccessor;
 import me.aleksilassila.litematica.printer.printer.zxy.Utils.PlayerAction;
 import me.aleksilassila.litematica.printer.printer.zxy.inventory.SwitchItem;
+import me.aleksilassila.litematica.printer.pwp.utils.ActionControler;
 import net.fabricmc.fabric.mixin.content.registry.AxeItemAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -806,7 +807,18 @@ public class PlacementGuide extends PrinterUtils {
         }
         public void sendPlacementPreparation(LocalPlayer player){
             switchToItems(player, clickItems);
-            Implementation.sendLookPacket(player, lookDirection, lookDirection2);
+            if (lookDirection == null) {
+                // 獲得看向該座標的角度
+                float[] lookBlockAngle = ActionControler.getLookBlockAngle(player, target);
+                if (lookBlockAngle == null) return;
+
+                float yaw = lookBlockAngle[0];
+                float pitch = lookBlockAngle[1];
+
+                Implementation.sendLookPacket(player, yaw, pitch);
+            } else {
+                Implementation.sendLookPacket(player, lookDirection, lookDirection2);
+            }
         }
 
         public void sendQueue(LocalPlayer player) {
