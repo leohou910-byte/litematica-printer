@@ -641,13 +641,19 @@ public class Printer extends PrinterUtils {
         if (!verify()) return;
 
         // initialize
+        WorldSchematic worldSchematic = SchematicWorldHandler.getSchematicWorld();
         LocalPlayer pEntity = client.player;
-        tickRate = PRINT_INTERVAL.getIntegerValue();
+        ClientLevel world = client.level;
+        if (worldSchematic == null ||
+            pEntity == null ||
+            world == null
+        ) return;
 
         range1 = PRINTER_RANGE.getIntegerValue();
-        endTime = System.currentTimeMillis() + PRINT_TIMEOUT.getIntegerValue();
         yDegression = false;
-
+        endTime = System.currentTimeMillis() + PRINT_TIMEOUT.getIntegerValue();
+        tickRate = PRINT_INTERVAL.getIntegerValue();
+        
         // finish unfinished action
         if (currentAction != null) {
             switchToItems(pEntity, currentAction.clickItems);
@@ -695,19 +701,16 @@ public class Printer extends PrinterUtils {
         }
 
         // forEachBlockInRadius:
-        WorldSchematic worldSchematic = SchematicWorldHandler.getSchematicWorld();
-        ClientLevel world = client.level;
         boolean forcedPlacementBooleanValue = FORCED_PLACEMENT.getBooleanValue();
 
         BlockPos pos;
         while ((pos = getBlockPos2()) != null) {
-            // check
-            if (!canInteracted(pos) &&
+            // check range
+            if (!canInteracted(pos) ||
                 !DataManager.getRenderLayerRange().isPositionWithinRange(pos)
             ) continue;
 
             // 跳過放置
-            if (worldSchematic == null) continue;
             BlockState requiredState = worldSchematic.getBlockState(pos);
             if (PUT_SKIP.getBooleanValue() &&
                 PUT_SKIP_LIST.getStrings().stream().anyMatch(block -> equalsBlockName(block, requiredState.getBlock()))
@@ -752,11 +755,12 @@ public class Printer extends PrinterUtils {
                 }
             }
 
+            // 強制蹲下
             if (forcedPlacementBooleanValue) action.shift = true;
             
             //发送放置准备
-            action.queueAction(pos);
             action.sendPlacementPreparation(pEntity);
+            action.queueAction(pos);
 
             Vec3 hitModifier = usePrecisionPlacement(pos, requiredState);
             if (hitModifier != null) {
@@ -764,7 +768,7 @@ public class Printer extends PrinterUtils {
                 action.usePrecisionPlacement = true;
             }
 
-            //处理不能快速放置的方块
+            // 处理不能快速放置的方块
             if (hitModifier == null && isFacingBlock(requiredState)) {
                 facingTimeOut = 0;
                 currentAction = action;
