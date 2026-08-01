@@ -7,7 +7,7 @@ import static me.aleksilassila.litematica.printer.LitematicaMixinMod.TOGGLE_PRIN
 
 import me.aleksilassila.litematica.printer.printer.State.PrintModeType;
 
-public class _PrinterUtils {
+public class PrinterConfigUtils {
     public static boolean isPrinterEnabled() {
         return TOGGLE_PRINTING_MODE.getBooleanValue() || PRINT.getKeybind().isPressed();
     }
@@ -20,6 +20,6 @@ public class _PrinterUtils {
         if (PRINTER_MODE.getOptionListValue() instanceof PrintModeType modeType) {
             return modeType;
         }
-        return PrintModeType.PRINTER;
+        return null;
     }
 }

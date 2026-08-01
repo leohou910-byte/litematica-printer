@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import me.aleksilassila.litematica.printer.printer.State;
-import me.aleksilassila.litematica.refactor.config.util._PrinterUtils;
+import me.aleksilassila.litematica.refactor.config.util.PrinterConfigUtils;
 import me.aleksilassila.litematica.refactor.core.task.AbstractPrinterTask;
 
 public class PrinterTaskManager {
@@ -21,16 +21,16 @@ public class PrinterTaskManager {
     }
 
     public void tick() {
-        if (!_PrinterUtils.isPrinterEnabled()) return;
+        if (!PrinterConfigUtils.isPrinterEnabled()) return;
 
-        int tickRate = _PrinterUtils.getPrintInterVal();
+        int tickRate = PrinterConfigUtils.getPrintInterVal();
         this.gameTick++;
         if (this.gameTick < tickRate) {
             return;
         }
         this.gameTick = 0;
 
-        AbstractPrinterTask currentTask = this.printerTasks.get(_PrinterUtils.getPrintModeType());
+        AbstractPrinterTask currentTask = this.printerTasks.get(PrinterConfigUtils.getPrintModeType());
         if (currentTask == null) return;
         currentTask.tick();
     }
