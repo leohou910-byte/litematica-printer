@@ -1,29 +1,37 @@
 package me.aleksilassila.litematica.refactor.core;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
+import me.aleksilassila.litematica.printer.printer.State;
+import me.aleksilassila.litematica.refactor.config.util._PrinterUtils;
 import me.aleksilassila.litematica.refactor.core.task.AbstractPrinterTask;
-import me.aleksilassila.litematica.refactor.core.task.impl.*;
 
 public class PrinterTaskManager {
-    private boolean enablePrinter;
-    private List<AbstractPrinterTask> printerTasks;
+    private Map<State.PrintModeType, AbstractPrinterTask> printerTasks;
+    private int gameTick;
 
-    public PrinterTaskManager(){
-        this.enablePrinter = false;
-        this.printerTasks =  new ArrayList<>();
-
-        this.printerTasks.add(new PrintTask());
-        this.printerTasks.add(new FillTask());
+    public PrinterTaskManager() {
+        this.printerTasks = new HashMap<>();
+        this.gameTick = 0;
     }
 
-    public void tick(){
-        enablePrinter = false;
-        if (enablePrinter != true) return;
-        
-        for (AbstractPrinterTask task : printerTasks) {
-            task.tick();
+    public void addTask(State.PrintModeType printerType, AbstractPrinterTask Task) {
+        this.printerTasks.put(printerType, Task);
+    }
+
+    public void tick() {
+        if (!_PrinterUtils.isPrinterEnabled()) return;
+
+        int tickRate = _PrinterUtils.getPrintInterVal();
+        this.gameTick++;
+        if (this.gameTick < tickRate) {
+            return;
         }
+        this.gameTick = 0;
+
+        AbstractPrinterTask currentTask = this.printerTasks.get(_PrinterUtils.getPrintModeType());
+        if (currentTask == null) return;
+        currentTask.tick();
     }
 }

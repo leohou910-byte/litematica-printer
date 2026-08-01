@@ -15,6 +15,10 @@ public abstract class AbstractPrinterTask {
         }
     }
 
+    protected BlockPos getPos() {
+        return null;
+    }
+
     protected abstract boolean canExcute();
 
     protected abstract void excute();
