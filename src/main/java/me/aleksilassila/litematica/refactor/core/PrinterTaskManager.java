@@ -23,8 +23,8 @@ public class PrinterTaskManager {
     public void tick() {
         if (!PrinterConfigUtils.isPrinterEnabled()) return;
 
-        int tickRate = PrinterConfigUtils.getPrintInterVal();
         this.gameTick++;
+        int tickRate = PrinterConfigUtils.getPrintInterVal();
         if (this.gameTick < tickRate) {
             return;
         }
