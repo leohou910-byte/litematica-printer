@@ -13,13 +13,13 @@ public abstract class AbstractPrinterTask {
     protected Iterator<BlockPos> posIterator;
     
     public AbstractPrinterTask(){
-        this.pos = null;
-        this.posIterator = null;
     }
     
     public final void tick(Minecraft minecraft, int printDistance, int executionPertick) {
         Vec3 playerEyeVec3 = minecraft.player.getEyePosition();
         this.pos = getPos(playerEyeVec3, printDistance);
+        if (pos == null) return;
+        
         if (canExecute(pos)) {
             execute(pos);
         }
