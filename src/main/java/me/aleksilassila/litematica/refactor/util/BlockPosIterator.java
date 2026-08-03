@@ -1,18 +1,14 @@
 package me.aleksilassila.litematica.refactor.util;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import net.minecraft.core.BlockPos;
 
-public class BlockPosIterator implements Iterable<BlockPos>, Iterator<BlockPos> {
+public class BlockPosIterator implements Iterable<BlockPos> {
     private BlockPos pos1;
     private BlockPos pos2;
-    private BlockPos returnPos;
-    private BlockPos currentPos;
-
-    public Iterator<BlockPos> iterator() {
-        return this;
-    }
+    private BlockPosIteratorType posIteratorType;
 
     public BlockPosIterator() {
     }
@@ -28,7 +24,7 @@ public class BlockPosIterator implements Iterable<BlockPos>, Iterator<BlockPos> 
             Math.max(y1, y2), 
             Math.max(z1, z2)
         );
-        initCurrPos();;
+        this.posIteratorType = BlockPosIteratorType.CUBE;
     }
 
     public BlockPosIterator(BlockPos pos1, BlockPos pos2) {
@@ -42,7 +38,7 @@ public class BlockPosIterator implements Iterable<BlockPos>, Iterator<BlockPos> 
             Math.max(pos1.getY(), pos2.getY()), 
             Math.max(pos1.getZ(), pos2.getZ())
         );
-        initCurrPos();
+        this.posIteratorType = BlockPosIteratorType.CUBE;
     }
 
     public BlockPosIterator(BlockPos centerPos, int distance) {
@@ -59,7 +55,7 @@ public class BlockPosIterator implements Iterable<BlockPos>, Iterator<BlockPos> 
             centerY + distance, 
             centerZ + distance
         );
-        initCurrPos();
+        this.posIteratorType = BlockPosIteratorType.SPHERE;
     }
 
     public void setPos1(BlockPos pos1) {
@@ -70,47 +66,78 @@ public class BlockPosIterator implements Iterable<BlockPos>, Iterator<BlockPos> 
         this.pos2 = pos2;
     }
 
-    public void initCurrPos() {
-        if (pos1.getX() > pos2.getX() || 
-            pos1.getY() > pos2.getY() || 
-            pos1.getZ() > pos2.getZ()
-        ) {
-            currentPos = null;
-        } else {
-            currentPos = pos1;
+    public void setPosIteratorType(BlockPosIteratorType type) {
+        this.posIteratorType = type;
+    }
+
+    @Override
+    public Iterator<BlockPos> iterator() {
+        return new Itr();
+    }
+
+    private class Itr implements Iterator<BlockPos> {
+        BlockPos currentPos;
+        BlockPos returnPos;
+
+        public Itr() {
+            initCurrPos();
         }
-    }
+        
+        @Override
+        public boolean hasNext() {
+            return currentPos != null;
+        }
 
-    @Override
-    public boolean hasNext() {
-        return currentPos != null;
-    }
+        @Override
+        public BlockPos next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException("No more elements in BlockPosIterator");
+            }
 
-    @Override
-    public BlockPos next() {
-        returnPos = currentPos;
+            returnPos = currentPos;
 
-        int x = currentPos.getX();
-        int y = currentPos.getY();
-        int z = currentPos.getZ();
+            int x = currentPos.getX();
+            int y = currentPos.getY();
+            int z = currentPos.getZ();
 
-        if (++x > pos2.getX()) {
-            x = pos1.getX();
-            if (++z > pos2.getZ()) {
-                z = pos1.getZ();
-                if (++y > pos2.getY()) {
-                    currentPos = null;
+            if (++x > pos2.getX()) {
+                x = pos1.getX();
+                if (++z > pos2.getZ()) {
+                    z = pos1.getZ();
+                    if (++y > pos2.getY()) {
+                        currentPos = null;
+                        return returnPos;
+                    }
                 }
+            }
+
+            currentPos = new BlockPos(x, y, z);
+            return returnPos;
+        }
+
+        public void initCurrPos() {
+            switch (posIteratorType) {
+                case CUBE:
+                    if (pos1 == null || 
+                        pos2 == null ||
+                        pos1.getX() > pos2.getX() || 
+                        pos1.getY() > pos2.getY() || 
+                        pos1.getZ() > pos2.getZ()
+                    ) {
+                        currentPos = null;
+                    } else {
+                        currentPos = pos1;
+                    }
+
+                    break;
+                case SPHERE:
+                    
+                    break;
+                default:
+                    break;
             }
         }
 
-        return returnPos;
-    }
 
-    public BlockPos getNextPos() {
-        if (hasNext()) {
-            return next();
-        }
-        return null;
     }
 }
