@@ -1,202 +1,139 @@
 package me.aleksilassila.litematica.refactor.util;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import kotlin.collections.builders.MapBuilder.Itr;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.Vec3;
 
 public class BlockPosIterable implements Iterable<BlockPos> {
     private BlockPos pos1;
     private BlockPos pos2;
-    private Vec3 centerVec3;
-    private double distance;
-    private BlockPosIteratorType posIteratorType;
 
     public BlockPosIterable() {
     }
 
     public BlockPosIterable(int x1, int y1, int z1, int x2, int y2, int z2) {
-        this.pos1 = new BlockPos(
-            Math.min(x1, x2), 
-            Math.min(y1, y2), 
-            Math.min(z1, z2)
-        );
-        this.pos2 = new BlockPos(
-            Math.max(x1, x2), 
-            Math.max(y1, y2), 
-            Math.max(z1, z2)
-        );
-        this.posIteratorType = BlockPosIteratorType.CUBE;
+        setBounds(new BlockPos(x1, y1, z1), new BlockPos(x2, y2, z2));
     }
 
     public BlockPosIterable(BlockPos pos1, BlockPos pos2) {
-        this.pos1 = new BlockPos(
-            Math.min(pos1.getX(), pos2.getX()), 
-            Math.min(pos1.getY(), pos2.getY()), 
-            Math.min(pos1.getZ(), pos2.getZ())
-        );
-        this.pos2 = new BlockPos(
-            Math.max(pos1.getX(), pos2.getX()), 
-            Math.max(pos1.getY(), pos2.getY()), 
-            Math.max(pos1.getZ(), pos2.getZ())
-        );
-        this.posIteratorType = BlockPosIteratorType.CUBE;
+        setBounds(pos1, pos2);
     }
 
-    public BlockPosIterable(Vec3 centerVec3, double distance) {
-        this.centerVec3 = centerVec3;
-        this.distance = distance;
-        this.posIteratorType = BlockPosIteratorType.SPHERE;
+    public BlockPosIterable(BlockPos centerPos, int distance) {
+        if (centerPos != null && distance >= 0) {
+            setBounds(
+                new BlockPos(
+                    centerPos.getX() - distance, 
+                    centerPos.getY() - distance, 
+                    centerPos.getZ() - distance
+                ),
+                new BlockPos(
+                    centerPos.getX() + distance, 
+                    centerPos.getY() + distance, 
+                    centerPos.getZ() + distance
+                )
+            );
+        }
+    }
+
+    private void setBounds(BlockPos p1, BlockPos p2) {
+        if (p1 == null || p2 == null) {
+            this.pos1 = null;
+            this.pos2 = null;
+            return;
+        }
+        this.pos1 = new BlockPos(
+            Math.min(p1.getX(), p2.getX()),
+            Math.min(p1.getY(), p2.getY()),
+            Math.min(p1.getZ(), p2.getZ())
+        );
+        this.pos2 = new BlockPos(
+            Math.max(p1.getX(), p2.getX()),
+            Math.max(p1.getY(), p2.getY()),
+            Math.max(p1.getZ(), p2.getZ())
+        );
     }
 
     public void setPos1(BlockPos pos1) {
-        this.pos1 = pos1;
+        setBounds(pos1, this.pos2);
     }
 
     public void setPos2(BlockPos pos2) {
-        this.pos2 = pos2;
+        setBounds(this.pos1, pos2);
     }
-
-    public void setCenterVec3(Vec3 center) {
-        this.centerVec3 = center;
-    }
-
-    public void setDistance(double dis) {
-        this.distance = dis;
-    }
-
-    public void setPosIteratorType(BlockPosIteratorType type) {
-        this.posIteratorType = type;
-    }
-
+    
     @Override
     public Iterator<BlockPos> iterator() {
-        return new Itr();
+        // 若未初始化或狀態不合法，回傳標準空迭代器，避免 Crash
+        if (this.pos1 == null || this.pos2 == null) {
+            return Collections.emptyIterator();
+        }
+
+        return new Itr(this.pos1, this.pos2);
     }
 
-    private class Itr implements Iterator<BlockPos> {
-        private BlockPos currentPos;
-        private BlockPos returnPos;
+    private static class Itr implements Iterator<BlockPos> {
+        private final BlockPos pos1;
+        private final BlockPos pos2;
+        private final BlockPos.MutableBlockPos cursor;
+        private int x;
+        private int y;
+        private int z;
+        private boolean hasNext;
 
-        public Itr() {
-            initCurrPos();
+        public Itr(BlockPos pos1, BlockPos pos2) {
+            this.pos1 = pos1;
+            this.pos2 = pos2;
+
+            this.cursor = new BlockPos.MutableBlockPos(
+                this.pos1.getX(),
+                this.pos1.getY(),
+                this.pos1.getZ()
+            );
+            this.x = this.cursor.getX();
+            this.y = this.cursor.getY();
+            this.z = this.cursor.getZ();
+            // 確保 pos1 <= pos2 才能開始走訪
+            this.hasNext = pos1.getX() <= pos2.getX() 
+                        && pos1.getY() <= pos2.getY() 
+                        && pos1.getZ() <= pos2.getZ();
         }
         
         @Override
         public boolean hasNext() {
-            return currentPos != null;
+            return this.hasNext;
         }
 
         @Override
         public BlockPos next() {
+            // 沒有元素時先拋出例外，不再執行後續操作
             if (!hasNext()) {
                 throw new NoSuchElementException("No more elements in BlockPosIterator");
             }
+            
+            // 寫入當前座標至重用物件中
+            this.cursor.set(this.x, this.y, this.z);
 
-            returnPos = currentPos;
+            // 計算下一次要用的座標
+            this.x++;
+            if (this.x > this.pos2.getX()) {
+                this.x = this.pos1.getX();
 
-            int x = currentPos.getX();
-            int y = currentPos.getY();
-            int z = currentPos.getZ();
+                this.z++;
+                if (this.z > this.pos2.getZ()) {
+                    this.z = this.pos1.getZ();
 
-            switch (BlockPosIterable.this.posIteratorType) {
-                case CUBE:
-                    BlockPos p1 = BlockPosIterable.this.pos1;
-                    BlockPos p2 = BlockPosIterable.this.pos2;
-
-                    x++;
-                    if (x <= p2.getX()) break;
-                    x = p1.getX();
-                    
-                    z++;
-                    if (z <= p2.getZ()) break;
-                    z = p1.getZ();
-
-                    y++;
-                    if (y <= p2.getY()) break;
-                    currentPos = null;
-                    
-                    break;
-                case SPHERE:
-                    Vec3 center = BlockPosIterable.this.centerVec3;
-                    double dis = BlockPosIterable.this.distance;
-                    double sqrDX = (x - center.x) * (x - center.x);
-                    double sqrDY = (y - center.y) * (y - center.y);
-                    double sqrDZ = (z - center.z) * (z - center.z);
-                    double sqrDis = dis * dis;
-
-                    x++;
-                    if (x <= getSphereOffSet(center.x, sqrD, sqrDZ, sqrDis, true)) break;
-                    x = getSphereOffSet(center.x, sqrDY, sqrDZ, sqrDis, false);
-                    
-                    z++;
-                    if (z <= getSphereOffSet(center.z, sqrDX, sqrDY, sqrDis, true)) break;
-                    z = getSphereOffSet(center.z, sqrDX, sqrDY, sqrDis, false);
-
-                    y++;
-                    if (++y <= getSphereOffSet(center.y, sqrDX, sqrDZ, sqrDis, true)) break;
-                    currentPos = null;
-
-                    break;
-                default:
-                    return null;
-            }
-
-            if (currentPos != null) {
-                this.currentPos = new BlockPos(x, y, z);
-            }
-            return returnPos;
-        }
-
-        public void initCurrPos() {
-            switch (BlockPosIterable.this.posIteratorType) {
-                case CUBE:
-                    if (
-                        pos1 == null || 
-                        pos2 == null ||
-                        pos1.getX() > pos2.getX() || 
-                        pos1.getY() > pos2.getY() || 
-                        pos1.getZ() > pos2.getZ()
-                    ) {
-                        currentPos = null;
+                    this.y++;
+                    if (this.y > this.pos2.getY()) {
+                        this.hasNext = false;
                     }
-
-                    currentPos = pos1;
-
-                    break;
-                case SPHERE:
-                    if (
-                        centerVec3 == null ||
-                        distance <= 0
-                    ) {
-                        currentPos = null;
-                    }
-
-                    Vec3 center = BlockPosIterable.this.centerVec3;
-                    double dis = BlockPosIterable.this.distance;
-                    double sqrX = (center.x) * (center.x);
-                    double sqrZ = (center.z) * (center.z);
-                    double sqrDis = dis * dis;
-
-                    int y = getSphereOffSet(center.y, sqrX, sqrZ, sqrDis, false);
-                    int z = getSphereOffSet(center.z, sqrX, y * y, sqrDis, false);
-                    int x = getSphereOffSet(center.x, y * y, z*z, sqrDis, false);
-
-                    currentPos = new BlockPos(x, y, z);
-
-                    break;
-                default:
-                    break;
+                }
             }
-        }
-        
-        private int getSphereOffSet(double centerAxis, double sqrD1, double sqrD2, double sqrDis, boolean isMax) {
-            double sqrOffset = sqrDis - sqrD1 - sqrD2;
-            if (sqrOffset <= 0) return (int) Math.floor(centerAxis);
 
-            double offset = Math.sqrt(sqrOffset);
-            return (int) Math.floor(centerAxis + (isMax ? offset : -offset));
+            return this.cursor;
         }
     }
 }
