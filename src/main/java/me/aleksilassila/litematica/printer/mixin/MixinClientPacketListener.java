@@ -1,8 +1,8 @@
 package me.aleksilassila.litematica.printer.mixin;
 
 import me.aleksilassila.litematica.printer.printer.zxy.inventory.SwitchItem;
-import me.aleksilassila.litematica.printer.pwp.SchematicContainerSync;
-import me.aleksilassila.litematica.printer.pwp.SchematicContainerSync.SchematicSyncState;
+import me.aleksilassila.litematica.printer.pwp.refactor.core.SchematicContainerSync;
+import me.aleksilassila.litematica.printer.pwp.refactor.core.SchematicContainerSync.SchematicSyncState;
 import me.aleksilassila.litematica.printer.printer.zxy.Utils.ZxyUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;

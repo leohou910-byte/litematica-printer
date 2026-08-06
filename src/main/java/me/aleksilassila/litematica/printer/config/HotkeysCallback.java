@@ -12,7 +12,7 @@ import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import me.aleksilassila.litematica.printer.printer.State;
 import me.aleksilassila.litematica.printer.printer.bedrockUtils.Messager;
 import me.aleksilassila.litematica.printer.printer.zxy.inventory.OpenInventoryPacket;
-import me.aleksilassila.litematica.printer.pwp.SchematicContainerSync;
+import me.aleksilassila.litematica.printer.pwp.refactor.core.SchematicContainerSync;
 //#if MC >= 12001
 import fi.dy.masa.malilib.util.GuiUtils;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;

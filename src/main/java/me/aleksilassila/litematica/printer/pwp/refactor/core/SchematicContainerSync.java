@@ -1,4 +1,4 @@
-package me.aleksilassila.litematica.printer.pwp.refactor.core.task.impl;
+package me.aleksilassila.litematica.printer.pwp.refactor.core;
 
 import java.util.*;
 
