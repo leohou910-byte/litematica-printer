@@ -1,4 +1,4 @@
-package me.aleksilassila.litematica.printer.pwp.utils;
+package me.aleksilassila.litematica.printer.pwp.refactor.core.action;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -10,6 +10,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class ActionControler {
+    
     // look
     public static float[] getLookBlockAngle(LocalPlayer player, BlockPos pos) {
         if (player == null) {

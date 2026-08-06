@@ -1,8 +1,8 @@
-package me.aleksilassila.litematica.refactor.core.task;
+package me.aleksilassila.litematica.printer.pwp.refactor.core.task;
 
 import java.util.Iterator;
 
-import me.aleksilassila.litematica.refactor.util.BlockPosIterable;
+import me.aleksilassila.litematica.printer.pwp.refactor.util.BlockPosIterable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -25,7 +25,7 @@ public abstract class AbstractPrinterTask {
     /**
      * 執行單一遊戲 tick 的任務邏輯。
      * <p>
-     * 在單一 tick 內最多嘗試執行 {@code executionPertick} 次有效的操作。
+     * 在單一 tick 內最多嘗試執行 {@code executionPertick} 次有效的操作，次數設為零則執行全部範圍。
      * 若範圍內已無滿足條件的方塊，將提前結束本 tick 的執行。
      *
      * @param minecraft        Minecraft 客戶端實例
@@ -33,7 +33,7 @@ public abstract class AbstractPrinterTask {
      * @param executionPertick 每 tick 允許執行的最大操作數量
      */
     public final void tick(Minecraft minecraft, int printDistance, int executionPertick) {
-        if (printDistance <= 0 || executionPertick <= 0) {
+        if (printDistance <= 0 || executionPertick < 0) {
             return;
         }
 
@@ -46,8 +46,20 @@ public abstract class AbstractPrinterTask {
 
         Vec3 eyeVec3 = player.getEyePosition();
 
+        BlockPos pos;
+        
+        if (executionPertick == 0) {
+            this.posIterator = null;
+
+            while ((pos = getPos(eyeVec3, printDistance)) != null) {
+                execute(pos);
+            }
+
+            return;
+        }
+
         for (int i = 0; i < executionPertick; i++) {
-            BlockPos pos = getPos(eyeVec3, printDistance);
+            pos = getPos(eyeVec3, printDistance);
             if (pos == null) {
                 return;
             }

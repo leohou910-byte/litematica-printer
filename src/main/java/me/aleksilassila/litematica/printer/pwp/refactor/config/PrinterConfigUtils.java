@@ -1,4 +1,4 @@
-package me.aleksilassila.litematica.refactor.config.util;
+package me.aleksilassila.litematica.printer.pwp.refactor.config;
 
 import static me.aleksilassila.litematica.printer.LitematicaMixinMod.PRINT;
 import static me.aleksilassila.litematica.printer.LitematicaMixinMod.PRINTER_MODE;

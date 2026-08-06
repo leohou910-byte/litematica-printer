@@ -1,11 +1,12 @@
-package me.aleksilassila.litematica.refactor.core;
+package me.aleksilassila.litematica.printer.pwp.refactor.core;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import me.aleksilassila.litematica.printer.printer.State;
-import me.aleksilassila.litematica.refactor.config.util.PrinterConfigUtils;
-import me.aleksilassila.litematica.refactor.core.task.AbstractPrinterTask;
+import me.aleksilassila.litematica.printer.pwp.refactor.config.PrinterConfigUtils;
+import me.aleksilassila.litematica.printer.pwp.refactor.core.task.AbstractPrinterTask;
+import net.minecraft.client.Minecraft;
 
 public class PrinterTaskManager {
     private Map<State.PrintModeType, AbstractPrinterTask> printerTasks;
@@ -20,7 +21,7 @@ public class PrinterTaskManager {
         this.printerTasks.put(printerType, Task);
     }
 
-    public void tick() {
+    public void tick(Minecraft mc) {
         if (!PrinterConfigUtils.isPrinterEnabled()) return;
 
         this.gameTick++;
@@ -30,8 +31,11 @@ public class PrinterTaskManager {
         }
         this.gameTick = 0;
 
+        if (printerTasks.isEmpty()) return;
+
         AbstractPrinterTask currentTask = this.printerTasks.get(PrinterConfigUtils.getPrintModeType());
         if (currentTask == null) return;
-        currentTask.tick();
+        
+        currentTask.tick(mc, 6,1);
     }
 }

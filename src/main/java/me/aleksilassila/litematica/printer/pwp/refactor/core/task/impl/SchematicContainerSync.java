@@ -1,4 +1,4 @@
-package me.aleksilassila.litematica.printer.pwp;
+package me.aleksilassila.litematica.printer.pwp.refactor.core.task.impl;
 
 import java.util.*;
 
@@ -8,8 +8,8 @@ import fi.dy.masa.litematica.selection.Box;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.litematica.world.WorldSchematic;
 import me.aleksilassila.litematica.printer.printer.zxy.inventory.InventoryUtils;
-import me.aleksilassila.litematica.printer.pwp.utils.VersionIntegration;
-import me.aleksilassila.litematica.printer.pwp.utils.ActionControler;
+import me.aleksilassila.litematica.printer.pwp.refactor.util.VersionIntegrator;
+import me.aleksilassila.litematica.printer.pwp.refactor.core.action.ActionControler;
 import me.aleksilassila.litematica.printer.printer.zxy.Utils.HighlightBlockRenderer;
 import me.aleksilassila.litematica.printer.printer.zxy.Utils.ZxyUtils;
 import me.aleksilassila.litematica.printer.printer.zxy.Utils.overwrite.MyBox;
@@ -293,17 +293,17 @@ public class SchematicContainerSync {
     public static void startSingleSchematicContainerSync() {
         HitResult hitResult = client.hitResult;
         if (hitResult == null || hitResult.getType() != HitResult.Type.BLOCK) {
-            VersionIntegration.overlayMessage(client, "未偵測到容器", false);
+            VersionIntegrator.overlayMessage(client, "未偵測到容器", false);
             return;
         }
 
         blockPos = ((BlockHitResult) hitResult).getBlockPos();
         if (!InventoryUtils.isInventory(client.level, blockPos)) {
-            VersionIntegration.overlayMessage(client, "這不是容器", false);
+            VersionIntegrator.overlayMessage(client, "這不是容器", false);
             return;
         }
 
-        VersionIntegration.overlayMessage(client, "單獨容器同步", false);
+        VersionIntegrator.overlayMessage(client, "單獨容器同步", false);
         getReadyColor();
         schematicSyncList.clear();
         schematicSyncList.add(blockPos);
@@ -315,14 +315,14 @@ public class SchematicContainerSync {
     public static void startMultipleSchematicContainerSync() {
         if (schematicSyncList.isEmpty()) {
             getReadyColor();
-            VersionIntegration.overlayMessage(client, "多重藍圖容器同步", false);
+            VersionIntegrator.overlayMessage(client, "多重藍圖容器同步", false);
 
             schematicSyncList.clear();
             schematicSyncList.addAll(getSelectionAreaContainerList());
             highlightTargetPosList.addAll(schematicSyncList);
             schematicSyncState = SchematicSyncState.FIND_AND_CHECK_CONTAINER;
         } else {
-            VersionIntegration.overlayMessage(client, "藍圖容器同步取消", false);
+            VersionIntegrator.overlayMessage(client, "藍圖容器同步取消", false);
             stopSync();
         }
     }
@@ -332,14 +332,14 @@ public class SchematicContainerSync {
         switch (schematicSyncState) {
             case FIND_AND_CHECK_CONTAINER -> {
                 if (openRetryTimer > 0) {
-                    VersionIntegration.overlayMessage(client, "嘗試開啟容器...", false);
+                    VersionIntegrator.overlayMessage(client, "嘗試開啟容器...", false);
                     return;
                 }
 
                 // 已完成全部清單
                 if (schematicSyncList.isEmpty() && tempBlockPos == null) {
                     schematicSyncState = SchematicSyncState.IDLE;
-                    VersionIntegration.overlayMessage(client, "藍圖容器同步完成", false);
+                    VersionIntegrator.overlayMessage(client, "藍圖容器同步完成", false);
                     return;
                 }
 
@@ -362,14 +362,14 @@ public class SchematicContainerSync {
 
                 // 容器是否在範圍內
                 if (blockPos == null) {
-                    VersionIntegration.overlayMessage(client, "距離過遠", false);
+                    VersionIntegrator.overlayMessage(client, "距離過遠", false);
                     return;
                 }
 
                 // 檢查容器狀態是否能開啟
                 ContainerResult result = canContainerOpen(blockPos);
                 if (!result.canOpen) {
-                    VersionIntegration.overlayMessage(client, result.message(), false);
+                    VersionIntegrator.overlayMessage(client, result.message(), false);
 
                     schematicSyncList.remove(blockPos);
                     highlightTargetPosList.remove(blockPos);
@@ -448,7 +448,7 @@ public class SchematicContainerSync {
                 } else {
                     display = String.join(", ", names);
                 }
-                VersionIntegration.overlayMessage(client, "缺少物品: " + display, false);
+                VersionIntegrator.overlayMessage(client, "缺少物品: " + display, false);
             }
 
             default -> {}

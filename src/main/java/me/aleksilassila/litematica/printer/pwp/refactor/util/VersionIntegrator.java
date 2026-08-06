@@ -1,9 +1,9 @@
-package me.aleksilassila.litematica.printer.pwp.utils;
+package me.aleksilassila.litematica.printer.pwp.refactor.util;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
-public class VersionIntegration {
+public class VersionIntegrator {
     public static void overlayMessage(final Minecraft client, final String message, final boolean animate) {
         if (client == null || client.gui == null) return;
 

@@ -1,4 +1,4 @@
-package me.aleksilassila.litematica.refactor.util;
+package me.aleksilassila.litematica.printer.pwp.refactor.util;
 
 import java.util.Collections;
 import java.util.Iterator;

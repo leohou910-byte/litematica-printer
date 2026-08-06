@@ -1,6 +1,6 @@
-package me.aleksilassila.litematica.refactor.core.task.impl;
+package me.aleksilassila.litematica.printer.pwp.refactor.core.task.impl;
 
-import me.aleksilassila.litematica.refactor.core.task.AbstractPrinterTask;
+import me.aleksilassila.litematica.printer.pwp.refactor.core.task.AbstractPrinterTask;
 import net.minecraft.core.BlockPos;
 
 public class FillTask extends AbstractPrinterTask {
